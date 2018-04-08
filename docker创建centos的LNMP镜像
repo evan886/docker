@@ -1,0 +1,44 @@
+
+ docker build -t="evan886/centos7_lnmp:v1" .
+
+
+
+
+[root@localhost ~]# docker pull centos
+latest: Pulling from centos
+3690474eb5b4: Pull complete 
+b200b2d33d98: Pull complete 
+3fbd5972aaac: Pull complete 
+d83a55af4e75: Pull complete 
+Digest: sha256:79aacacabba31540d665dec70afbf9a6d85a7200a008c0a6f9e6ba6ba5f4c988
+Status: Downloaded newer image for centos:latest
+
+
+
+[root@localhost ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+centos              latest              d83a55af4e75        11 hours ago        196.7 MB
+
+docker run -i -t centos /bin/bash
+
+
+[root@226dbd44ac40 /]# cat /etc/redhat-release 
+CentOS Linux release 7.2.1511 (Core) 
+
+
+[root@226dbd44ac40 hosts]# exit
+exit
+[root@localhost ~]# docker ps -lq
+226dbd44ac40
+
+）提交生成新镜像
+[root@localhost ~]# docker  commit 226dbd44ac40  evan/dev:v1
+
+9f4ef08d53972e0034c3e03cb735e4048bc21f10d01c95db7b29009211343bc2
+
+docker run -d -p 80:80 -v  /data/www:/data/www evan/dev:v1 /sbin/init
+7ce16940b3f4879ca4d48e78907c9c4599bfb7d185f151d5b8000da13a35f924
+
+
+
+

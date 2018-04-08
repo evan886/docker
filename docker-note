@@ -1,0 +1,282 @@
+
+To run Docker on CentOS-6.5 or later, you need kernel 2.6.32-431 or higher.
+
+
+官网的方法 6.6aliyun 不太成功
+
+https://docs.docker.com/installation/centos/
+
+
+yum update
+
+#DNS要为google dns 
+ curl -O -sSL https://get.docker.com/rpm/1.7.0/centos-6/RPMS/x86_64/docker-engine-1.7.0-1.el6.x86_64.rpm
+
+yum localinstall --nogpgcheck docker-engine-1.7.0-1.el6.x86_64.rpm
+
+
+curl -O -sSL  https://get.docker.com/rpm/1.7.0/centos-7/RPMS/x86_64/docker-engine-1.7.0-1.el7.centos.x86_64.rpm
+
+
+yum localinstall --nogpgcheck  docker-engine-1.7.0-1.el7.centos.x86_64.rpm
+
+
+
+#问题 7的话会自己安装 应该是extras 源的问题 在6加上应该就行了
+Requires: libpthread.so.0
+错误：Package: docker-engine-1.7.0-1.el6.x86_64 (/docker-engine-1.7.0-1.el6.x86_64)
+          Requires: libc.so.6
+错误：Package: docker-engine-1.7.0-1.el6.x86_64 (/docker-engine-1.7.0-1.el6.x86_64)
+          Requires: libsqlite3.so.0
+
+
+ service docker start
+ chkconfig docker on
+ 
+ 安装
+
+https://wiki.centos.org/zh/Cloud/Docker
+
+#4 centos 7 
+#rpm -ivh http://mirrors.aliyun.com/epel/7/x86_64/e/epel-release-7-7.noarch.rpm
+
+yum install docker -y 
+curl -sSL http://acs-public-mirror.oss-cn-hangzhou.aliyuncs.com/docker-engine/internet | sh -
+
+systemctl enable docker
+systemctl status docker 
+
+[root@localhost ~]# systemctl list-unit-files | grep docker
+docker.service                                           enabled 
+docker.socket   
+
+[root@localhost ~]#  chkconfig docker on
+注意：正在将请求转发到“systemctl enable docker.service”。
+ln -s '/usr/lib/systemd/system/docker.service' '/etc/systemd/system/multi-user.target.wants/docker.service'
+
+
+这是书本的方法 
+添加 EPEL源
+rpm -Uvh http://ftp.linux.ncsu.edu/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+yum update
+
+#20160725
+rpm -ivh http://mirrors.aliyun.com/epel/6/x86_64/epel-release-6-8.noarch.rpm
+yum install docker-io -y 
+
+ service docker start 
+
+
+[root@AY1401141503198663afZ ~]# docker run hello-world
+FATA[0000] Cannot connect to the Docker daemon. Is 'docker -d' running on this host? 
+
+
+
+
+
+
+安装 Docker —— CentOS-
+http://wiki.centos.org/zh/Cloud/Docker
+
+
+
+**************************************************
+chapter 2 容器 
+
+docker create debian:8.1
+
+docker start 1cc85f8edf3e
+
+
+#查看所有容器 包含未启动的
+ docker ps -a
+
+
+docker run == docker create +docker start 
+可以创建两种类型的容器  后台型容器和交互性容器 
+
+先讲交互性容器
+# -i 打开标准输入(STDIN), -t 为容器建立一个命令行终端  --name 标志为容器指定一个名字   ubuntu 告诉docker使用ubuntu 镜像 最重 是在容器执行命令  /bin/bash 
+
+docker run -i -t --name=myubunt ubuntu /bin/bash 
+
+
+接下来 是 后台型容器 因为实际应用中 一般是后台性 
+
+后台型容器要用 -d 参数 
+
+ docker run -i -t --name  blackubunt -d ubuntu /bin/bash -c "while true; do echo hello world; sleep1; done"
+
+
+#列出最近的
+ docker ps  -l 
+
+#-n=x 最后创建的x 个容器
+docker ps   -n=2 
+
+
+启动容器可以用   NAMES or CONTAINER ID
+
+docker start  NAMES or CONTAINER ID
+
+重启容器  --restart 
+
+docker run --restart=always --name docker_restart -d ubuntu /bin/sh  -c "while true; do echo hello world; sleep1; done"
+
+
+--restart=always 不管容器返回码是什么 都重启
+如果为on-failure 返回码非0 时 重启，还可以接受重启次数 
+
+--restart=on-failure:5   最后重启5次 
+
+
+好像不能用ip 进入容器 
+#docker run -i   1cc85f8edf3e
+docker run -i    -t debian:8.1 /bin/bash
+
+终止容器
+docker stop  CONTAINER ID
+docker kill   CONTAINER ID
+
+docker rm  #一般是先停止再删除 虽然可以用rm -f 
+
+
+容器内信息和命令执行 
+
+依附容器 
+
+要多按一次回车才出现容器shell交互  后台型的不行 
+
+docker attach myubunt
+
+
+
+[root@localhost ~]# docker run -d --name 36logs ubuntu /bin/bash -c "for((i=0;1;i++)); do echo $i; sleep1; done;"
+
+
+docker logs -f 36logs
+docker logs -f --tail=5  36logs
+docker logs -f --tail=5 -t   36logs 
+
+
+#查看容器进程 
+docker top 36logs 
+
+#查看容器信息
+docker inspect  36logs
+
+
+#-f or --format  
+docker inspect 格式化，查看指定部分信息
+
+docker inspect --format='{{.NetworkSettings.IPAddress}}' 36logs
+172.17.0.4
+
+
+
+容器内执行命令  exec 
+ docker exec -d myubuntu touch /etc/newfile
+
+还可以是交互型
+
+docker exec -t -i myubuntu /bin/bash 
+
+-t 建立终端 -i 打开STDIN
+
+导入和导出  p26 
+
+docker export  mykali > mykali.tar
+
+导入 
+cat mykali.tar| docker import - imported:container
+
+res:tag 分别代表生成的镜像和标记  imported:container
+
+还可以用一个url 来导入网络上的容器
+
+docker import url res:tag 
+
+××××××××××××××××××××××××××××××××8
+chapter 4  容器网络基础  
+
+http://www.infoq.com/cn/articles/docker-network-and-pipework-open-source-explanation-practice
+
+http://www.xiaomastack.com/2015/02/06/docker-static-ip/
+
+http://www.oschina.net/translate/docker-network-configuration
+
+http://linuxwiki.github.io/Services/Docker.html
+
+http://www.cnblogs.com/feisky/p/4105497.html
+
+http://www.ectap.com/?p=5
+
+
+阿里云cenos 6.5 模板上安装 docker
+http://dockerpool.com/article/1415195109
+使用 docker -d 来查看详细的启动过程
+提示我们没有空余 ip 分配给 docker0 了。
+
+那我们就使用 --bip 参数来手工分配给 ip 地址。比如：
+
+# docker --bip=192.168.100.1/24 -d &
+
+docker run -d -P training/webapp python app.py
+
+[root@localhost ~]# docker  ps 
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS                     NAMES
+a178423e0d64        training/webapp     "python app.py"     15 minutes ago      Up 15 minutes       0.0.0.0:32768->5000/tcp   sharp_mayer 
+
+
+
+ docker logs -f suspicious_stallman
+
+
+如何外部访问容器  
+
+运行 mysql：
+docker run --name mysql_1 -e MYSQL_ROOT_PASSWORD=test_test  -d  mysql
+
+运行 wordpress：
+docker run --name wordpress_1 --link mysql_1:mysql -p 80:80 -d wordpress
+
+参数解释：
+--name mysql_1  给docker容器起个名字。
+-e MYSQL_ROOT_PASSWORD=test_test  指定mysql的root密码。
+-p 80:80  把主机（CoreOS）的80端口映射到docker容器内部的80端口，这样就可以通过“主机ip:80”访问到容器里80端口的服务。
+--link mysql_1:mysql  这个参数比较神奇，看起来很简单，但要解释清楚还是有点复杂的。简言之，这个参数把两个docker容器打通了，使它们内部的应用可以很容易地互访。
+
+
+docker run --name wordpress_1 --link mysql_1:mysql -p 80:80 -d nginx
+
+
+
+要用ps 查看名子哦
+docker run --name distracted_curie -p 80:80 -d  debian:8.1
+
+
+
+docker build --rm -t wordpress:centos7 .
+
+[root@localhost ~]# docker ps 
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+edbbbe0b6149        debian:8.1          "/bin/bash"         About an hour ago   Up About an hour                        distracted_curie   
+
+
+
+docker run -name my-blog  -p 8181:80 -d wordpress
+
+*********************
+
+Docker创建centos的LNMP镜像
+http://www.vckai.com/p/29
+
+
+https://github.com/tyua07/centsos_7_lnmp
+
+
+
+创建可以ssh的docker容器
+http://8721349.blog.51cto.com/8711349/1533295
+
+
