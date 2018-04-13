@@ -266,6 +266,12 @@ edbbbe0b6149        debian:8.1          "/bin/bash"         About an hour ago   
 
 docker run -name my-blog  -p 8181:80 -d wordpress
 
+删除容器
+https://yeasy.gitbooks.io/docker_practice/content/container/rm.html
+
+Docker 技巧：删除 Docker 容器和镜像
+
+https://segmentfault.com/a/1190000004491286
 *********************
 
 Docker创建centos的LNMP镜像
